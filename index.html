@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VDC - Resiliência Financeira e Auditoria</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root { --vdc-navy: #002d72; --vdc-gold: #a88f5d; --risk-red: #d93025; }
+        body { background-color: #f8f9fa; font-family: 'Inter', system-ui, sans-serif; }
+        .audit-card { border: none; border-top: 6px solid var(--vdc-navy); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .section-label { color: var(--vdc-navy); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #dee2e6; margin-bottom: 20px; padding-bottom: 5px; }
+        .margin-box { background-color: #ffffff; border: 2px solid #eee; transition: all 0.3s; }
+        .risk-alert { border-color: var(--risk-red) !important; background-color: #fff5f5 !important; }
+        .btn-vdc { background-color: var(--vdc-navy); color: white; border: none; font-weight: 600; padding: 12px 24px; }
+        .btn-vdc:hover { background-color: #001d4a; color: white; }
+    </style>
+</head>
+<body class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+            <div class="card audit-card p-5">
+                <header class="text-center mb-5">
+                    <h1 class="fw-bold text-dark">Análise e Resiliência Financeira</h1>
+                    <p class="lead text-muted">Auditoria de Fluxos de Intermediação e Margem Real</p>
+                </header>
+
+                <form id="auditForm">
+                    <div class="section-label">I. Cronologia e Tipologia de Fluxo</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">1. Data Operação</label>
+                            <input type="date" class="form-control" id="p1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">2. Data Valor</label>
+                            <input type="date" class="form-control" id="p2">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">3. ID Transação</label>
+                            <input type="text" class="form-control" id="p3" placeholder="Referência Única" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">4. Tipo Movimento</label>
+                            <select class="form-select" id="p4">
+                                <option value="Intermediação">Intermediação Digital</option>
+                                <option value="Consultoria">Consultoria T&A</option>
+                                <option value="SaaS">Subscrição SaaS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="section-label">II. Origem e Descrição Forense</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">5. Beneficiário/Entidade</label>
+                            <input type="text" class="form-control" id="p5" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">6. IBAN/NIB</label>
+                            <input type="text" class="form-control" id="p6">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">7. Descrição Extrato</label>
+                            <input type="text" class="form-control" id="p7">
+                        </div>
+                    </div>
+
+                    <div class="section-label">III. Processamento Analítico (Margem Real)</div>
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">8. MCC</label>
+                            <input type="text" class="form-control" id="p8" placeholder="Código Setor">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-primary">9. Montante Bruto (€)</label>
+                            <input type="number" step="0.01" class="form-control form-control-lg border-primary" id="p9" oninput="calcularFluxos()" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">10. Taxas (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="p10" oninput="calcularFluxos()" value="0.00">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">11. IVA (23%)</label>
+                            <input type="number" class="form-control bg-light" id="p11" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <div id="marginBox" class="margin-box p-2 rounded text-center">
+                                <label class="form-label d-block small fw-bold">MARGEM LÍQUIDA REAL</label>
+                                <span id="margemFinal" class="h4 fw-bold">0.00 €</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-label">IV. Verificação de Integridade</div>
+                    <div class="row mb-5">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">12. Saldo Resultante (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="p12" required>
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end">
+                            <p id="riskText" class="text-muted small mb-2"></p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center bg-light p-4 rounded">
+                        <button type="button" class="btn btn-vdc btn-lg" onclick="gerarRelatorioForense()">EXPORTAR PROVA LEGAL (PDF)</button>
+                        <div class="text-end">
+                            <p class="small mb-1 text-muted">Custódia Segura via:</p>
+                            <a href="https://web.tresorit.com/" target="_blank" class="btn btn-dark btn-sm">TRESORIT CLOUD</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
